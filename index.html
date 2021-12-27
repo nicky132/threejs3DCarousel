@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>three.js css3d - periodic table</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<!-- <link type="text/css" rel="stylesheet" href="css/main.css">
+		<link rel="stylesheet" href="css/animate.min.css"> -->
+		<style>
+
+		html, body {
+            height: 100%;
+        }
+        body {
+            background-color: #000000;
+            margin: 0;
+            font-family: Helvetica, sans-serif;;
+            overflow: hidden;
+        }
+        a {
+            color: #ffffff;
+        }
+        #info {
+            position: absolute;
+            width: 100%;
+            color: #ffffff;
+            padding: 5px;
+            font-family: Monospace;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1;
+        }
+        #menu {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-family: verdana,Tahoma,Arial,Hei,"Microsoft Yahei",SimHei;
+        }
+        .element-container{
+            /* position: absolute;
+            left: 50%;
+            width: 200px !important;
+            height: 200px !important;
+            animation: rotate360 60s linear infinite; */
+        }
+        .element {
+            /* width: 120px; */
+            width: 400px;
+            height: 200px;
+            box-shadow: 0px 0px 12px rgba(0,255,255,0.5);
+            border: 1px solid rgba(127,255,255,0.25);
+            text-align: center;
+            cursor: default;
+            /* transform: rotateY(0deg) translateZ(280px);  */
+        }
+        .element:hover {
+            box-shadow: 0px 0px 12px rgba(0,255,255,0.75);
+            border: 1px solid rgba(127,255,255,0.75);
+        }
+        .element .number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 12px;
+            color: rgba(127,255,255,0.75);
+        }
+        .element .symbol {
+            position: absolute;
+            top: 40px;
+            left: 0px;
+            right: 0px;
+            font-size: 60px;
+            font-weight: bold;
+            color: rgba(255,255,255,0.75);
+            text-shadow: 0 0 10px rgba(0,255,255,0.95);
+        }
+        .element .details {
+            position: absolute;
+            bottom: 15px;
+            left: 0px;
+            right: 0px;
+            font-size: 12px;
+            color: rgba(127,255,255,0.75);
+        }
+        @keyframes rotate360 {
+            from{
+            transform: rotateY(0deg);
+            }
+            to{
+            transform: rotateY(-360deg);
+            }
+        }
+        button {
+            color: rgba(127,255,255,0.75);
+            background: transparent;
+            outline: 1px solid rgba(127,255,255,0.75);
+            border: 0px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: rgba(0,255,255,0.5);
+        }
+        button:active {
+            color: #000000;
+            background-color: rgba(0,255,255,0.75);
+        }
+		</style>
+	</head>
+	<body>
+		<div id="container"></div>
+
+		<script src="https://www.jq22.com/jquery/jquery-1.10.2.js"></script>
+
+		<script type="module">
+			import * as THREE from './jss/three.module.js';
+
+			import { TWEEN } from './jss/tween.module.min.js';
+			import { TrackballControls } from './jss/TrackballControls.js';
+			import { CSS3DRenderer, CSS3DObject } from './jss/CSS3DRenderer.js';
+  
+		    // ------元素周期原始数据------
+			const table = [
+				"H", "Hydrogen", "1.00794", 1, 1,
+				"He", "Helium", "4.002602", 18, 1,
+				"Li", "Lithium", "6.941", 1, 2,
+				"Be", "Beryllium", "9.012182", 2, 2,
+				"B", "Boron", "10.811", 13, 2,
+				"C", "Carbon", "12.0107", 14, 2,
+			];
+
+			let camera, scene, renderer;
+			let controls;
+			let container;
+
+			const objects = [];
+			const targets = { table: [], sphere: [], helix: [], grid: [] };
+
+			init();
+			animate();
+
+			function init() {
+
+				// 初始相机距离
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 10000 );
+				// camera.position.z = 3000; // 3000
+                camera.position.set(400, 800, 2000);
+				scene = new THREE.Scene();
+
+				// table
+
+				// for ( let i = 0; i < table.length; i += 1 ) {
+                for ( let i = 0; i < table.length; i += 5 ) {
+					const element = document.createElement( 'div' );
+					element.className = 'element';
+					element.style.backgroundColor = 'rgba(0,127,127,' + ( Math.random() * 0.5 + 0.25 ) + ')';
+
+
+                    var number = document.createElement( 'div' );
+                    number.className = 'number';
+                    number.textContent = (i) + 1;
+                    element.appendChild( number );
+
+					const objectCSS = new CSS3DObject( element );
+					objectCSS.position.x = Math.random() * 4000 - 2000;
+					objectCSS.position.y = Math.random() * 4000 - 2000;
+					objectCSS.position.z = Math.random() * 4000 - 2000;
+					scene.add( objectCSS );
+
+					objects.push( objectCSS );
+
+					//
+
+					const object = new THREE.Object3D();
+					// object.position.x = ( table[ i + 3 ] * 140 ) - 1330;
+					// object.position.y = - ( table[ i + 4 ] * 180 ) + 990;
+					object.position.x = ( table[ i ].p_x * 140 ) - 1330;
+					object.position.y = - ( table[ i ].p_y * 180 ) + 990;
+
+					targets.table.push( object );
+
+				}
+
+
+				// helix
+                const vector = new THREE.Vector3();
+				for ( let i = 0, l = objects.length; i < l; i ++ ) {
+
+					// const theta = i * 0.175 + Math.PI;
+					// const y = - ( i * 8 ) + 850;
+					// const object = new THREE.Object3D();
+					// // 参数一 圈的大小 参数二 左右间距 参数三 上下间距
+					// object.position.setFromCylindricalCoords( 900, theta, y );
+
+                    const theta = i  + Math.PI;
+					const y = 0;
+					const object = new THREE.Object3D();
+					// 参数一 圈的大小 参数二 左右间距 参数三 上下间距
+					object.position.setFromCylindricalCoords( 900, theta, y );
+					vector.x = object.position.x * 2;
+					vector.y = object.position.y;
+					vector.z = object.position.z * 2;
+
+					object.lookAt( vector );
+
+					targets.helix.push( object );
+
+				}
+
+				// 渲染
+				renderer = new CSS3DRenderer();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container = document.getElementById( 'container' );
+				container.appendChild( renderer.domElement );
+
+
+				// 鼠标控制
+
+				controls = new TrackballControls( camera, renderer.domElement );
+				controls.rotateSpeed = 0.5;
+				controls.minDistance = 500;
+				controls.maxDistance = 6000;
+				controls.addEventListener( 'change', render );
+
+				// 自动更换
+				// setInterval(function(){
+                //     transform( targets.helix, 1000 );
+				// },8000);
+
+				transform( targets.helix, 2000 );
+
+				window.addEventListener( 'resize', onWindowResize );
+
+			}
+
+			function transform( targets, duration ) {
+
+				TWEEN.removeAll();
+
+				for ( let i = 0; i < objects.length; i ++ ) {
+
+					const object = objects[ i ];
+					const target = targets[ i ];
+
+					new TWEEN.Tween( object.position )
+						.to( { x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration )
+						.easing( TWEEN.Easing.Exponential.InOut )
+						.start();
+
+					new TWEEN.Tween( object.rotation )
+						.to( { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration )
+						.easing( TWEEN.Easing.Exponential.InOut )
+						.start();
+
+				}
+
+				new TWEEN.Tween( this )
+					.to( {}, duration * 2 )
+					.onUpdate( render )
+					.start();
+
+			}
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				render();
+			}
+
+			function animate() {
+
+				// 让场景通过x轴或者y轴旋转  & z
+				// scene.rotation.x += 0.011;
+				scene.rotation.y += 0.0008;
+				requestAnimationFrame( animate );
+
+				TWEEN.update();
+
+				controls.update();
+
+				// 渲染循环
+				render();
+			}
+
+			function render() {
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+	</body>
+</html>
